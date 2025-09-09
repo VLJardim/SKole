@@ -1,15 +1,33 @@
 <?php
+// Pipper – simpel API (GET + POST på samme URL)
+
+declare(strict_types=1);
+
+// ----- HEADERS (JSON + dev CORS) -----
 header('Content-Type: application/json; charset=UTF-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
+// Preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+  http_response_code(204);
+  exit;
+}
+
+// ----- HJÆLPER TIL JSON SVAR -----
+function send_json($data, int $code = 200): void {
+  http_response_code($code);
+  echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+  exit;
+}
+
+// ----- DB KONFIG -----
 $DB_HOST = '127.0.0.1';
 $DB_NAME = 'pipper';
 $DB_USER = 'root';
-$DB_PASS = ''; // put a password if you set one
-// If your MySQL runs on another port (e.g. 3307), add ;port=3307 in the DSN:
+$DB_PASS = ''; // sæt evt. dit root-password her
+// Hvis din MySQL kører på en anden port (fx 3307), tilføj ;port=3307 herunder
 $dsn = "mysql:host={$DB_HOST};dbname={$DB_NAME};charset=utf8mb4";
 
 try {
@@ -18,36 +36,45 @@ try {
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
   ]);
 } catch (PDOException $e) {
-  http_response_code(500);
-  echo json_encode(['ok'=>false,'error'=>'DB connect failed','detail'=>$e->getMessage()]);
-  exit;
+  send_json(['ok' => false, 'error' => 'DB connect failed', 'detail' => $e->getMessage()], 500);
 }
 
 $method = $_SERVER['REQUEST_METHOD'];
 
+// ----- GET: alle pips (nyeste først) -----
 if ($method === 'GET') {
-  $stmt = $pdo->query("SELECT id, username, message,
-              DATE_FORMAT(created_at,'%Y-%m-%d %H:%i:%s') AS created_at
-              FROM pips ORDER BY created_at DESC");
-  echo json_encode($stmt->fetchAll());
-  exit;
+  $sql = "SELECT id, username, message,
+          DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS created_at
+          FROM pips ORDER BY created_at DESC";
+  $rows = $pdo->query($sql)->fetchAll();
+  send_json($rows);
 }
 
+// ----- POST: opret pip -----
 if ($method === 'POST') {
   $ctype = $_SERVER['CONTENT_TYPE'] ?? '';
-  $data = (stripos($ctype,'application/json') !== false)
-      ? json_decode(file_get_contents('php://input'), true)
-      : $_POST;
+  $data = (stripos($ctype, 'application/json') !== false)
+    ? json_decode(file_get_contents('php://input'), true)
+    : $_POST;
 
-  if (!is_array($data)) { http_response_code(400); echo json_encode(['ok'=>false,'error'=>'Invalid JSON']); exit; }
+  if (!is_array($data)) {
+    send_json(['ok' => false, 'error' => 'Invalid JSON body'], 400);
+  }
 
-  $username = trim($data['username'] ?? '');
-  $message  = trim($data['message'] ?? '');
+  $username = trim((string)($data['username'] ?? ''));
+  $message  = trim((string)($data['message'] ?? ''));
 
-  if ($username === '' || $message === '') { http_response_code(400); echo json_encode(['ok'=>false,'error'=>'username and message required']); exit; }
-  if (mb_strlen($username) > 30)           { http_response_code(413); echo json_encode(['ok'=>false,'error'=>'username too long']); exit; }
-  if (mb_strlen($message)  > 255)          { http_response_code(413); echo json_encode(['ok'=>false,'error'=>'message too long']);  exit; }
+  if ($username === '' || $message === '') {
+    send_json(['ok' => false, 'error' => 'username and message are required'], 400);
+  }
+  if (mb_strlen($username) > 30) {
+    send_json(['ok' => false, 'error' => 'username too long (max 30)'], 413);
+  }
+  if (mb_strlen($message) > 255) {
+    send_json(['ok' => false, 'error' => 'message too long (max 255)'], 413);
+  }
 
+  // simpel sanitization
   $username = strip_tags($username);
   $message  = strip_tags($message);
 
@@ -55,13 +82,17 @@ if ($method === 'POST') {
   $stmt->execute([$username, $message]);
   $id = (int)$pdo->lastInsertId();
 
-  $created = $pdo->prepare("SELECT DATE_FORMAT(created_at,'%Y-%m-%d %H:%i:%s') AS created_at FROM pips WHERE id=?");
-  $created->execute([$id]);
-  $row = $created->fetch();
+  $row = $pdo->prepare("SELECT DATE_FORMAT(created_at, '%Y-%m-%d %H:%i:%s') AS created_at FROM pips WHERE id = ?");
+  $row->execute([$id]);
+  $created = $row->fetch();
 
-  echo json_encode(['id'=>$id,'username'=>$username,'message'=>$message,'created_at'=>$row['created_at'] ?? date('Y-%m-%d %H:%i:%s')]);
-  exit;
+  send_json([
+    'id'         => $id,
+    'username'   => $username,
+    'message'    => $message,
+    'created_at' => $created['created_at'] ?? date('Y-m-d H:i:s'),
+  ], 200);
 }
 
-http_response_code(405);
-echo json_encode(['ok'=>false,'error'=>'Method not allowed']);
+// ----- Fejl: metode ikke tilladt -----
+send_json(['ok' => false, 'error' => 'Method not allowed'], 405);

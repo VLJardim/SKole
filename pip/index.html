@@ -4,34 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pipper · MVP</title>
-  <!-- Link til separat CSS-fil -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!--
-    HOVEDSTRUKTUR: .app indeholder venstre sidebar (.sidebar) og center feed (.feed)
-    Vi holder alt simpelt og tæt på X’s layout.
-  -->
+  <!-- App layout: venstre sidebar + centreret feed -->
   <div class="app">
     <!-- VENSTRE MENU -->
     <nav class="sidebar" aria-label="Primær">
-      <!-- Brand/logo -->
       <a href="#" class="brand" id="brandLink" title="Gå til toppen">
-        <!-- Minimalistisk "P" ikon – kan senere skiftes til Feather Icons -->
+        <!-- Minimalistisk "P"-ikon -->
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M6 19V5h8a5 5 0 1 1 0 10H9v4H6zM9 12h5a2 2 0 1 0 0-4H9v4z" fill="currentColor"/>
         </svg>
         <span class="brand-text">Pipper</span>
       </a>
 
-      <!-- Primær CTA: Åbn modal til at lave et nyt Pip -->
-      <button class="pip-btn" id="openModalBtn" aria-haspopup="dialog" aria-controls="pipModal">Pip</button>
+      <!-- Primær CTA: åbner modal -->
+      <button class="pip-btn" id="openModalBtn" aria-haspopup="dialog" aria-controls="pipModal">
+        Pip
+      </button>
     </nav>
 
     <!-- CENTER FEED -->
     <main class="feed" id="feed" aria-live="polite">
       <div class="feed-header">For dig</div>
-      <!-- Pips listes dynamisk herunder via JS -->
       <div id="pipList" role="list"></div>
     </main>
   </div>
@@ -48,31 +44,12 @@
         <div class="modal-body">
           <div class="field">
             <label for="username">Brugernavn</label>
-            <!-- maxLength 30 som aftalt -->
             <input type="text" id="username" name="username" maxlength="30" placeholder="F.eks. Victor" required />
             <div class="error" id="usernameError" hidden>Brugernavn er påkrævet (max 30 tegn).</div>
           </div>
 
           <div class="field">
             <label for="message">Pip-besked</label>
-            <!-- maxLength 255 – både UI og validering i JS sikrer grænsen -->
             <textarea id="message" name="message" maxlength="255" placeholder="Hvad sker der?" required></textarea>
             <div class="counter-row">
               <span id="charCounter">0/255</span>
-              <span class="error" id="messageError" hidden>Beskeden er påkrævet (max 255 tegn).</span>
-            </div>
-          </div>
-        </div>
-
-        <footer class="modal-footer">
-          <button type="button" class="btn" id="cancelBtn">Annullér</button>
-          <button type="submit" class="btn primary">Pip</button>
-        </footer>
-      </form>
-    </section>
-  </div>
-
-  <!-- Link til separat JS-fil -->
-  <script defer src="app.js"></script>
-</body>
-</html>
