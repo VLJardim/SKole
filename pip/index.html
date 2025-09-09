@@ -7,32 +7,24 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <!-- App layout: venstre sidebar + centreret feed -->
   <div class="app">
-    <!-- VENSTRE MENU -->
     <nav class="sidebar" aria-label="Primær">
       <a href="#" class="brand" id="brandLink" title="Gå til toppen">
-        <!-- Minimalistisk "P"-ikon -->
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <path d="M6 19V5h8a5 5 0 1 1 0 10H9v4H6zM9 12h5a2 2 0 1 0 0-4H9v4z" fill="currentColor"/>
         </svg>
         <span class="brand-text">Pipper</span>
       </a>
-
-      <!-- Primær CTA: åbner modal -->
-      <button class="pip-btn" id="openModalBtn" aria-haspopup="dialog" aria-controls="pipModal">
-        Pip
-      </button>
+      <button class="pip-btn" id="openModalBtn" aria-haspopup="dialog" aria-controls="pipModal">Pip</button>
     </nav>
 
-    <!-- CENTER FEED -->
     <main class="feed" id="feed" aria-live="polite">
       <div class="feed-header">For dig</div>
       <div id="pipList" role="list"></div>
     </main>
   </div>
 
-  <!-- MODAL (NY PIP) -->
+  <!-- MODAL -->
   <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
     <section class="modal" role="dialog" aria-modal="true" aria-labelledby="pipModalTitle" id="pipModal">
       <header class="modal-header">
@@ -47,9 +39,25 @@
             <input type="text" id="username" name="username" maxlength="30" placeholder="F.eks. Victor" required />
             <div class="error" id="usernameError" hidden>Brugernavn er påkrævet (max 30 tegn).</div>
           </div>
-
           <div class="field">
             <label for="message">Pip-besked</label>
             <textarea id="message" name="message" maxlength="255" placeholder="Hvad sker der?" required></textarea>
             <div class="counter-row">
               <span id="charCounter">0/255</span>
+              <span class="error" id="messageError" hidden>Beskeden er påkrævet (max 255 tegn).</span>
+            </div>
+          </div>
+        </div>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn" id="cancelBtn">Annullér</button>
+          <button type="submit" class="btn primary" id="submitBtn">Pip</button>
+        </footer>
+      </form>
+    </section>
+  </div>
+
+  <!-- Make sure this path matches your file location -->
+  <script defer src="app.js"></script>
+</body>
+</html>
